@@ -115,7 +115,7 @@ public class PlayerControls : MonoBehaviour
     }
     private void OnJumpPerformed(InputAction.CallbackContext value)
     {
-        if (rayCasters.AsQueryable().Any(ray => Physics.Raycast(transform.position, ray, ray.magnitude, -1)))
+        if (rayCasters.AsQueryable().Any(ray => Physics.Raycast(transform.position, ray, 1f, -1)))
             rb.AddForce(new Vector3(0,1,0) * 10, ForceMode.Impulse);
     }
 }
