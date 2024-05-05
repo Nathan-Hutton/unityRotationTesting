@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -16,6 +17,7 @@ public class PlayerControls : MonoBehaviour
     private float currentCameraYaw;
     private float cameraDistance;
     private Vector3[] rayCasters = new Vector3[5];
+    private Collider playerCollider = null;
     public float moveSpeed = 10f;
     public float lookSpeed = 20f;
     public float shockwaveRadius = 10f;
@@ -35,6 +37,8 @@ public class PlayerControls : MonoBehaviour
         rayCasters[2] = new Vector3(0, -0.5f, -0.5f);
         rayCasters[3] = new Vector3(0, 0.5f, 0.5f);
         rayCasters[4] = new Vector3(0, 0.5f, -0.5f);
+
+        playerCollider = GetComponent<Collider>();
     }
     private void OnEnable()
     {
@@ -102,11 +106,14 @@ public class PlayerControls : MonoBehaviour
     private void OnShockwavePerformed(InputAction.CallbackContext value)
     {
         Collider[] colliders = Physics.OverlapSphere(transform.position, shockwaveRadius);
+        Rigidbody rb;
 
         foreach (Collider hit in colliders)
         {
-            Rigidbody rb = hit.GetComponent<Rigidbody>();
-            if (rb == null)
+            if (hit == playerCollider)
+                continue;
+
+            if(!hit.TryGetComponent(out rb))
                 continue;
 
             Vector3 direction = rb.transform.position - transform.position;
