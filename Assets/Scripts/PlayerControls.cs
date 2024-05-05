@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -14,6 +15,7 @@ public class PlayerControls : MonoBehaviour
     private float currentCameraPitch;
     private float currentCameraYaw;
     private float cameraDistance;
+    private Vector3[] rayCasters = new Vector3[5];
     public float moveSpeed = 10f;
     public float lookSpeed = 20f;
     public float shockwaveRadius = 10f;
@@ -27,8 +29,14 @@ public class PlayerControls : MonoBehaviour
         currentCameraPitch = cameraTransform.rotation.x;
         currentCameraYaw = cameraTransform.rotation.y;
         cameraDistance = (transform.position - cameraTransform.position).magnitude;
+
+        rayCasters[0] = Vector3.down * 0.5f;
+        rayCasters[1] = new Vector3(0, -0.5f, 0.5f);
+        rayCasters[2] = new Vector3(0, -0.5f, -0.5f);
+        rayCasters[3] = new Vector3(0, 0.5f, 0.5f);
+        rayCasters[4] = new Vector3(0, 0.5f, -0.5f);
     }
-    private void OnEnable() 
+    private void OnEnable()
     {
         input.Enable();
         input.Player.Movement.performed += OnMovementPerformed;
@@ -36,6 +44,7 @@ public class PlayerControls : MonoBehaviour
         input.Player.ShockWave.performed += OnShockwavePerformed;
         input.Player.Look.performed += OnLookPerformed;
         input.Player.Look.canceled += OnLookCancelled;
+        input.Player.Jump.performed += OnJumpPerformed;
     }
     private void OnDisable() 
     {
@@ -48,6 +57,9 @@ public class PlayerControls : MonoBehaviour
     }
     private void Update()
     {
+        // ***********
+        // Camera
+        // ***********
         float yaw = lookDirection.x * lookSpeed * Time.deltaTime;
         currentCameraYaw += yaw;
 
@@ -62,6 +74,9 @@ public class PlayerControls : MonoBehaviour
         cameraTransform.position = transform.position + offset;
         cameraTransform.LookAt(transform);
 
+        // ****************
+        // Player RigidBody
+        // ****************
         transform.Rotate(0, yaw, 0);
     }
     private void FixedUpdate()
@@ -97,5 +112,10 @@ public class PlayerControls : MonoBehaviour
             Vector3 direction = rb.transform.position - transform.position;
             rb.AddForce(direction.normalized * shockwaveForce, ForceMode.Impulse);
         }
+    }
+    private void OnJumpPerformed(InputAction.CallbackContext value)
+    {
+        if (rayCasters.AsQueryable().Any(ray => Physics.Raycast(transform.position, ray, ray.magnitude, -1)))
+            rb.AddForce(new Vector3(0,1,0) * 10, ForceMode.Impulse);
     }
 }
